@@ -5,6 +5,13 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
 
+@if (Playlist == null)
+{
+    <div>
+        <h3>No fav list , please add yours</h3>
+    </div>
+    return;
+}
 <h1>Playlist <strong>@Playlist.Name</strong></h1>
 
 @if (!string.IsNullOrWhiteSpace(InfoMessage))
