@@ -168,8 +168,12 @@ else
                 {
                     <option id="Default">Select from existing list</option>
                     @foreach (var list in PlayLists)
-                    {                       
-                        <option id="@list.PlaylistId">@list.Name</option>
+                    {
+                        if (list.PlaylistId != Constants.FavoriteList.PlaylistId)
+                        {
+                            <option id="@list.PlaylistId">@list.Name</option>
+                        }
+                        
                     }
                 }
             </Select>
