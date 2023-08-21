@@ -21,7 +21,7 @@
 
 @if (Playlist == null)
 {
-     <Loading />
+    <Loading />
 }
 else
 {
@@ -30,7 +30,7 @@ else
             <tr>
                 <th>Track</th>
                 <th></th>
-        </tr>
+            </tr>
         </thead>
         <tbody>
             @foreach (var track in Playlist.Tracks)
@@ -43,7 +43,8 @@ else
                             {
                                 @if (track.IsFavorite)
                                 {
-                                    <a href="#" class="m-1" title="Unark as favorite" @onclick="@(() => UnfavoriteTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-star-fill"></i></a>
+
+                                    <a href="#" class="m-1" title="Unmark as favorite" @onclick="@(() => UnfavoriteTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-star-fill"></i></a>
                                 }
                                 else
                                 {
@@ -69,29 +70,15 @@ else
     private string CurrentUserId;
     private string InfoMessage;
 
+    //Used this overridden method, to make sure the aside NavLinks are rereshing the page.
+    protected override async Task OnParametersSetAsync()
+    {
+        await HelperMethod();
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        CurrentUserId = await GetUserId();
-
-        await InvokeAsync(StateHasChanged);
-        var DbContext = await DbFactory.CreateDbContextAsync();
-
-        Playlist = DbContext.Playlists
-            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-            .Where(p => p.PlaylistId == PlaylistId)
-            .Select(p => new ClientModels.Playlist()
-                {
-                    Name = p.Name,
-                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
-                    {
-                        AlbumTitle = t.Album.Title,
-                        ArtistName = t.Album.Artist.Name,
-                        TrackId = t.TrackId,
-                        TrackName = t.Name,
-                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                    }).ToList()
-                })
-            .FirstOrDefault();
+        await HelperMethod();
     }
 
     private async Task<string> GetUserId()
@@ -124,4 +111,32 @@ else
         InfoMessage = "";
     }
 
+    //ToDo : Separate DI service for Navigation functions -> Move to separate classes and create an API
+    private async Task HelperMethod()
+    {
+        await InvokeAsync(StateHasChanged);
+        CurrentUserId = await GetUserId();
+        var DbContext = await DbFactory.CreateDbContextAsync();
+
+        var Playlist1 = DbContext.Playlists
+         .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
+         .Where(p => p.PlaylistId == PlaylistId);
+
+        Playlist = DbContext.Playlists
+            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
+            .Where(p => p.PlaylistId == PlaylistId)
+            .Select(p => new ClientModels.Playlist()
+                {
+                    Name = p.Name,
+                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
+                    {
+                        AlbumTitle = t.Album.Title,
+                        ArtistName = t.Album.Artist.Name,
+                        TrackId = t.TrackId,
+                        TrackName = t.Name,
+                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
+                    }).ToList()
+                })
+            .FirstOrDefault();
+    }
 }

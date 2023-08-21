@@ -1,4 +1,9 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using System.Security.Claims;
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -6,32 +11,81 @@
         </button>
     </div>
 </div>
-
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu" style="height: 100%">
+    <nav class="flex-column" style="height: 100%; overflow-y:scroll;">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
         <div class="nav-item px-3">
-@* 
-            <NavLink class="nav-link" href="playlist/playlistnumber">
+            @* Loading side navigation with favorite list *@
+            @* href binds with hardcorded value *@
+            <NavLink class="nav-link" href="playlist/12345">
                 <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
             </NavLink>
-*@
-</div>
+            @if (Playlists != null)
+            {
+                //Loading side navigation with play lists
+                //href binds with playlist Id
+                @foreach (var nav in Playlists)
+                {
+                    <NavLink class="nav-link" href="@($"playlist/{nav.PlaylistId}")">
+                        <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@nav.Name
+                    </NavLink>
+                }
+            }
 
+        </div>
     </nav>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    //Injecting "IPlayLists"
+    [Inject] IPlayListsRepository playLists { get; set; }
 
+    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    private bool collapseNavMenu = true;
+    private string CurrentUserId = "";
+    private List<Models.Playlist> Playlists;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private HubConnection hubConnection;
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+       .WithUrl(NavigationManager.ToAbsoluteUri("/signalHub"))
+       .WithAutomaticReconnect()
+       .Build();
+
+        await LoadData();
+        hubConnection.On<Chinook.ClientModels.PlaylistTrack, string>("ReceivedSignal", async (track, listName) =>
+        {
+            Playlists = await playLists.CreatePlaylists(track, listName, CurrentUserId);
+            InvokeAsync(StateHasChanged);
+
+
+        });
+        await hubConnection.StartAsync();
+    }
+
+    private async Task LoadData()
+    {
+        CurrentUserId = await GetUserId();
+        Playlists = await playLists.GetPlayLists(CurrentUserId);
+    }
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+    private async Task<string> GetUserId()
+    {
+        var user = (await authenticationState).User;
+        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
+        return userId;
+    }
+    public async ValueTask DisposeAsync()
+    {
+         hubConnection?.DisposeAsync();
     }
 }

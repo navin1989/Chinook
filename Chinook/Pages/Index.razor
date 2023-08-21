@@ -1,7 +1,6 @@
 ﻿@page "/"
 @attribute [Authorize]
 
-@using Chinook.Models
 @using Microsoft.EntityFrameworkCore
 
 <PageTitle>Index</PageTitle>
@@ -14,6 +13,12 @@
 }
 else
 {
+    <div>
+        <div class="text-center">
+            <input class="search-box" @bind="@SearchKeyWord" placeholder="Search by artist" @oninput="FilterByArtist" />
+            <button class="search-box-clear btn" placeholder="Clear" @onclick="ClearSearch" />
+        </div>
+    </div>
     <table class="table table-striped table-hover table-sm">
         <thead>
             <tr>
@@ -35,24 +40,27 @@ else
 
 @code {
     private List<Artist> Artists;
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
+    private List<Artist> tempArtists;
+    private string SearchKeyWord;
+    // [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; } Navin : Commented as not needed anymore.
+    [Inject] IAlbumRepository albumRepository { get; set; }
 
     protected override async Task OnInitializedAsync() {
         await InvokeAsync(StateHasChanged);
-        Artists = await GetArtists();
+        Artists = await albumRepository.GetAlbums(); //Gets the albums using an API service.
+        tempArtists = Artists; //Search purpose
     }
 
-    public async Task<List<Artist>> GetArtists()
-    {   
-        var dbContext = await DbFactory.CreateDbContextAsync();
-        var users = dbContext.Users.Include(a => a.UserPlaylists).ToList();
-        
-        return dbContext.Artists.ToList();
-    }
-
-    public async Task<List<Album>> GetAlbumsForArtist(int artistId)
+    private void FilterByArtist(ChangeEventArgs e)
     {
-        var dbContext = await DbFactory.CreateDbContextAsync();
-        return dbContext.Albums.Where(a => a.ArtistId == artistId).ToList();
+        Artists = tempArtists;
+        if (e.Value is not null)
+        {
+            Artists = Artists.Where(a => a.Name.Contains(e.Value.ToString())).ToList();
+        }
+        if(Artists.Count == 0)
+        {
+            Artists = tempArtists;
+        }
     }
 }
