@@ -1,7 +1,6 @@
 ﻿@using System.Security.Claims;
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager NavigationManager
-@implements IAsyncDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -19,15 +18,10 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            @* Loading side navigation with favorite list *@
-            @* href binds with hardcorded value *@
-            <NavLink class="nav-link" href="playlist/12345">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
-            </NavLink>
             @if (Playlists != null)
             {
-                //Loading side navigation with play lists
-                //href binds with playlist Id
+                @*Loading side navigation with play lists
+                href binds with playlist Id *@
                 @foreach (var nav in Playlists)
                 {
                     <NavLink class="nav-link" href="@($"playlist/{nav.PlaylistId}")">
@@ -42,36 +36,29 @@
 
 @code {
     //Injecting "IPlayLists"
-    [Inject] IPlayListsRepository playLists { get; set; }
+    [Inject] IPlayListsRepository PlayListsRepo { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
     private bool collapseNavMenu = true;
     private string CurrentUserId = "";
     private List<Models.Playlist> Playlists;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private HubConnection hubConnection;
+
     protected override async Task OnInitializedAsync()
     {
-        hubConnection = new HubConnectionBuilder()
-       .WithUrl(NavigationManager.ToAbsoluteUri("/signalHub"))
-       .WithAutomaticReconnect()
-       .Build();
-
+        await InvokeAsync(StateHasChanged);
         await LoadData();
-        hubConnection.On<Chinook.ClientModels.PlaylistTrack, string>("ReceivedSignal", async (track, listName) =>
-        {
-            Playlists = await playLists.CreatePlaylists(track, listName, CurrentUserId);
-            InvokeAsync(StateHasChanged);
+    }
 
-
-        });
-        await hubConnection.StartAsync();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await OnInitializedAsync();
     }
 
     private async Task LoadData()
     {
         CurrentUserId = await GetUserId();
-        Playlists = await playLists.GetPlayLists(CurrentUserId);
+        Playlists = await PlayListsRepo.GetPlayLists(CurrentUserId);
     }
 
     private void ToggleNavMenu()
@@ -83,9 +70,5 @@
         var user = (await authenticationState).User;
         var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
         return userId;
-    }
-    public async ValueTask DisposeAsync()
-    {
-         hubConnection?.DisposeAsync();
     }
 }

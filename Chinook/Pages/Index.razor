@@ -39,27 +39,28 @@ else
 
 @code {
     private List<Artist> Artists;
-    private List<Artist> tempArtists;
+    private List<Artist> TempArtists;
     private string SearchKeyWord;
-    // [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; } Navin : Commented as not needed anymore.
-    [Inject] IAlbumRepository albumRepository { get; set; }
+
+    [Inject] IAlbumRepository AlbumRepository { get; set; }
 
     protected override async Task OnInitializedAsync() {
         await InvokeAsync(StateHasChanged);
-        Artists = await albumRepository.GetAlbums(); //Gets the albums using an API service.
-        tempArtists = Artists; //Search purpose
+        Artists = await AlbumRepository.GetAlbums(); //Gets the albums using an API service.
+        TempArtists = Artists; //Search purpose
     }
 
     private void FilterByArtist(ChangeEventArgs e)
     {
-        Artists = tempArtists;
+        Artists = TempArtists;
         if (e.Value is not null)
         {
             Artists = Artists.Where(a => a.Name.Contains(e.Value.ToString())).ToList();
         }
-        if(Artists.Count == 0)
+        else
         {
-            Artists = tempArtists;
+            Artists = TempArtists;
         }
+
     }
 }

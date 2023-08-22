@@ -41,7 +41,7 @@ else
                     <td>
                         @if (track.IsFavorite)
                         {
-                            <a href="#" class="m-1" title="Unmark as favorite" @onclick="@(() => UnfavoriteTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-star-filled"></i></a>
+                            <a href="#" class="m-1" title="Unmark as favorite" @onclick="@(() => UnfavoriteTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-star-fill"></i></a>
                         }
                         else
                         {
@@ -58,12 +58,10 @@ else
 
 @code {
     [Parameter] public long ArtistId { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
-    //[Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; }
     private Modal PlaylistDialog { get; set; }
-    // Injecting "IArtistsRepository"
-    [Inject] IArtistsRepository artistsRepository { get; set; }
-    [Inject] IPlayListsRepository playLists { get; set; }
+    [Inject] IArtistsRepository ArtistsRepository { get; set; }
+    [Inject] IPlayListsRepository PlayListsRepo { get; set; }
 
     private Artist Artist;
     private List<PlaylistTrack> Tracks;
@@ -72,32 +70,27 @@ else
     private PlaylistTrack SelectedTrack;
     private string InfoMessage;
     private string CurrentUserId;
-    private HubConnection hubConnection;
-    private string playListName { get; set; }
-    private string playListId { get; set; }
+    private HubConnection HubConnection;
+    private string PlayListName { get; set; }
+    private string PlayListId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        hubConnection = new HubConnectionBuilder()
-       .WithUrl(NavigationManager.ToAbsoluteUri("/signalHub"))
-       .WithAutomaticReconnect()
-       .Build();
-
+        await InvokeAsync(StateHasChanged);
         CurrentUserId = await GetUserId();
-        var artistModel = await artistsRepository.GetArtists(ArtistId, CurrentUserId);
+        var artistModel = await ArtistsRepository.GetArtists(ArtistId, CurrentUserId);
         Artist = artistModel.Artist;
         Tracks = artistModel.Tracks;
-
-
-        await hubConnection.StartAsync();
     }
 
-    public bool IsConnected =>
-        hubConnection.State == HubConnectionState.Connected;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await OnInitializedAsync();
+    }
 
     private async Task<string> GetUserId()
     {
-        var user = (await authenticationState).User;
+        var user = (await AuthenticationState).User;
         var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
         return userId;
     }
@@ -105,19 +98,20 @@ else
     private void FavoriteTrack(long trackId, string userId)
     {
         var track = Tracks.First(t => t.TrackId == trackId);
-        artistsRepository.AddFavorite(track, CurrentUserId);
+        ArtistsRepository.AddFavorite(track, CurrentUserId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
     }
 
     private void UnfavoriteTrack(long trackId)
     {
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
+        ArtistsRepository.UnFavorite(track, CurrentUserId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
     }
 
     private async Task OpenPlaylistDialog(long trackId)
     {
-        PlayLists = await playLists.GetPlayLists(CurrentUserId);
+        PlayLists = await PlayListsRepo.GetPlayLists(CurrentUserId);
         CloseInfoMessage();
         SelectedTrack = Tracks.FirstOrDefault(t => t.TrackId == trackId);
         PlaylistDialog.Open();
@@ -127,8 +121,7 @@ else
     {
         CloseInfoMessage();
         InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {{playlist name}}.";
-        //Invoke SignalR hub
-        hubConnection.SendAsync("SendSignal", SelectedTrack, @playListName);
+        var payLists = PlayListsRepo.CreatePlaylists(SelectedTrack, @PlayListName, CurrentUserId);
         PlaylistDialog.Close();
 
     }
@@ -142,7 +135,7 @@ else
     {
         if (e.Value is not null)
         {
-            playListName = (string)e.Value;
+            PlayListName = (string)e.Value;
         }
     }
 
@@ -169,7 +162,7 @@ else
                     <option id="Default">Select from existing list</option>
                     @foreach (var list in PlayLists)
                     {
-                        if (list.PlaylistId != Constants.FavoriteList.PlaylistId)
+                        if (list.Name != Constants.FavoriteList.Name)
                         {
                             <option id="@list.PlaylistId">@list.Name</option>
                         }
@@ -180,7 +173,7 @@ else
         </div>
         <div class="form-group mb-2">
             <label for="NewPlaylist">Create new playlist</label>
-            <input type="text" @bind="@playListName" @oninput="@((e) => { playListName=(string)e.Value;})" id="NewPlaylist" class="form-control" placeholder="Name for the new playlist" />
+            <input type="text" @bind="@PlayListName" @oninput="@((e) => { PlayListName=(string)e.Value;})" id="NewPlaylist" class="form-control" placeholder="Name for the new playlist" />
         </div>
     </Body>
     <Footer>
