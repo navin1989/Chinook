@@ -1,5 +1,6 @@
 using Chinook;
 using Chinook.Areas.Identity;
+using Chinook.ClientModels;
 using Chinook.Models;
 using Chinook.Services;
 using Microsoft.AspNetCore.Components.Authorization;
