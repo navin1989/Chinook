@@ -1,8 +1,8 @@
 ﻿using Chinook.ClientModels;
 using Chinook.Migrations;
-using Chinook.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System.Collections.ObjectModel;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -37,7 +37,7 @@ namespace Chinook.Services
                     AlbumTitle = (t.Album == null ? "-" : t.Album.Title),
                     TrackId = t.TrackId,
                     TrackName = t.Name,
-                    IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == userId && up.Playlist.Name == "My Favorites")).Any()
+                    IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == userId && up.Playlist.Name == Constants.FavoriteList.Name)).Any()
                 })
                 .ToList();
 
@@ -84,20 +84,19 @@ namespace Chinook.Services
             }
         }
 
-        public async Task UnFavorite(PlaylistTrack playlistTrack, string currentUserId)
+        //Delete from a play list
+        public async Task RemoveTrack(PlaylistTrack playlistTrack, long PlaylistId)
         {
             dbContext = await _dbContextFactory.CreateDbContextAsync();
             var track = dbContext.Tracks.FirstOrDefault(t => t.TrackId == playlistTrack.TrackId);
 
             if (track != null)
             {
-                //Remove a track from favorite list
                 try
                 {
-                    var userPlayLists = dbContext.UserPlaylists.Where(up => up.UserId == currentUserId).ToList();
-                    var favPlayList = dbContext.Playlists.Include(p => p.Tracks).First(p => p.Name == Constants.FavoriteList.Name);
+                    var favPlayList = dbContext.Playlists.Include(p => p.Tracks).First(p => p.PlaylistId == PlaylistId);
+                    track.Playlists.Remove(favPlayList);
                     favPlayList.Tracks.Remove(track);
-                    dbContext.Playlists.Update(favPlayList);
                     await dbContext.SaveChangesAsync();
 
                 }
@@ -108,6 +107,28 @@ namespace Chinook.Services
             }
         }
 
+       // Remove from favorite list
+        public async Task RemoveFavoriteTrack(PlaylistTrack playlistTrack)
+        {
+            dbContext = await _dbContextFactory.CreateDbContextAsync();
+            var track = dbContext.Tracks.FirstOrDefault(t => t.TrackId == playlistTrack.TrackId);
+
+            if (track != null)
+            {
+                try
+                {
+                    var favPlayList = dbContext.Playlists.Include(p => p.Tracks).First(p => p.Name == Constants.FavoriteList.Name);
+                    track.Playlists.Remove(favPlayList);
+                    favPlayList.Tracks.Remove(track);
+                    await dbContext.SaveChangesAsync();
+
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+            }
+        }
         private bool CheckUserPlayListExistence(ChinookContext dbContext, string userId)
         {
             var userPlayLists = dbContext.UserPlaylists.Where(up => up.UserId == userId).ToList();

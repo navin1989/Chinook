@@ -111,12 +111,14 @@ else
     private async Task UnfavoriteTrack(long trackId)
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        await ArtistsRepository.UnFavorite(track, CurrentUserId);
+        await ArtistsRepository.RemoveFavoriteTrack(track);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
     }
 
     private void RemoveTrack(long trackId)
     {
+        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
+        ArtistsRepository.RemoveTrack(track , PlaylistId);
         CloseInfoMessage();
     }
 

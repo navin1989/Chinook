@@ -105,7 +105,7 @@ else
     private void UnfavoriteTrack(long trackId)
     {
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        ArtistsRepository.UnFavorite(track, CurrentUserId);
+        ArtistsRepository.RemoveFavoriteTrack(track);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
     }
 
@@ -123,7 +123,6 @@ else
         InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {{playlist name}}.";
         var payLists = PlayListsRepo.CreatePlaylists(SelectedTrack, @PlayListName, CurrentUserId);
         PlaylistDialog.Close();
-
     }
 
     private void CloseInfoMessage()

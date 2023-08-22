@@ -1,5 +1,4 @@
 ﻿using Chinook.ClientModels;
-using Chinook.Models;
 
 namespace Chinook.Services
 {
@@ -7,6 +6,7 @@ namespace Chinook.Services
     {
         Task<ArtistData> GetArtists(long artistId, string currentUserId);
         Task AddFavorite(PlaylistTrack playlistTrack, string currentUserId);
-        Task UnFavorite(PlaylistTrack playlistTrack, string currentUserId);
+        Task RemoveFavoriteTrack(PlaylistTrack playlistTrack);
+        Task RemoveTrack(PlaylistTrack playlistTrack, long playListId);
     }
 }
