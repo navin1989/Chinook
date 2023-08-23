@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using System.Security.Claims;
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NavigationManager
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -6,32 +10,65 @@
         </button>
     </div>
 </div>
-
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu" style="height: 100%">
+    <nav class="flex-column" style="height: 100%; overflow-y:scroll;">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
         <div class="nav-item px-3">
-@* 
-            <NavLink class="nav-link" href="playlist/playlistnumber">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
-            </NavLink>
-*@
-</div>
+            @if (Playlists != null)
+            {
+                @*Loading side navigation with play lists
+                href binds with playlist Id *@
+                @foreach (var nav in Playlists)
+                {
+                    <NavLink class="nav-link" href="@($"playlist/{nav.PlaylistId}")">
+                        <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@nav.Name
+                    </NavLink>
+                }
+            }
 
+        </div>
     </nav>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    //Injecting "IPlayLists"
+    [Inject] IPlayListsRepository PlayListsRepo { get; set; }
 
+    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    private bool collapseNavMenu = true;
+    private string CurrentUserId = "";
+    private List<Models.Playlist> Playlists;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await OnInitializedAsync();
+    }
+
+    private async Task LoadData()
+    {
+        CurrentUserId = await GetUserId();
+        Playlists = await PlayListsRepo.GetPlayLists(CurrentUserId);
+    }
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+    private async Task<string> GetUserId()
+    {
+        var user = (await authenticationState).User;
+        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
+        return userId;
     }
 }

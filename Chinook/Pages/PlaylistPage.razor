@@ -5,6 +5,13 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
 
+@if (Playlist == null)
+{
+    <div>
+        <h3>No fav list , please add yours</h3>
+    </div>
+    return;
+}
 <h1>Playlist <strong>@Playlist.Name</strong></h1>
 
 @if (!string.IsNullOrWhiteSpace(InfoMessage))
@@ -21,7 +28,7 @@
 
 @if (Playlist == null)
 {
-     <Loading />
+    <Loading />
 }
 else
 {
@@ -30,7 +37,7 @@ else
             <tr>
                 <th>Track</th>
                 <th></th>
-        </tr>
+            </tr>
         </thead>
         <tbody>
             @foreach (var track in Playlist.Tracks)
@@ -43,7 +50,8 @@ else
                             {
                                 @if (track.IsFavorite)
                                 {
-                                    <a href="#" class="m-1" title="Unark as favorite" @onclick="@(() => UnfavoriteTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-star-fill"></i></a>
+
+                                    <a href="#" class="m-1" title="Unmark as favorite" @onclick="@(() => UnfavoriteTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-star-fill"></i></a>
                                 }
                                 else
                                 {
@@ -62,41 +70,33 @@ else
 
 @code {
     [Parameter] public long PlaylistId { get; set; }
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; }
+    [Inject] IPlayListsRepository PlayListRepository { get; set; }
+    [Inject] IArtistsRepository ArtistsRepository { get; set; }
 
     private Chinook.ClientModels.Playlist Playlist;
     private string CurrentUserId;
     private string InfoMessage;
 
+    //Used this overridden method, to make sure the aside NavLinks are rereshing the page.
+    protected override async Task OnParametersSetAsync()
+    {
+        await HelperMethod();
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        CurrentUserId = await GetUserId();
+        await HelperMethod();
+    }
 
-        await InvokeAsync(StateHasChanged);
-        var DbContext = await DbFactory.CreateDbContextAsync();
-
-        Playlist = DbContext.Playlists
-            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-            .Where(p => p.PlaylistId == PlaylistId)
-            .Select(p => new ClientModels.Playlist()
-                {
-                    Name = p.Name,
-                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
-                    {
-                        AlbumTitle = t.Album.Title,
-                        ArtistName = t.Album.Artist.Name,
-                        TrackId = t.TrackId,
-                        TrackName = t.Name,
-                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                    }).ToList()
-                })
-            .FirstOrDefault();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await OnInitializedAsync();
     }
 
     private async Task<string> GetUserId()
     {
-        var user = (await authenticationState).User;
+        var user = (await AuthenticationState).User;
         var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
         return userId;
     }
@@ -105,18 +105,21 @@ else
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+        ArtistsRepository.AddFavorite(track, CurrentUserId);
     }
 
-    private void UnfavoriteTrack(long trackId)
+    private async Task UnfavoriteTrack(long trackId)
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
+        await ArtistsRepository.RemoveFavoriteTrack(track);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
     }
 
     private void RemoveTrack(long trackId)
     {
+        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
+        ArtistsRepository.RemoveTrack(track , PlaylistId);
         CloseInfoMessage();
-
     }
 
     private void CloseInfoMessage()
@@ -124,4 +127,11 @@ else
         InfoMessage = "";
     }
 
+    private async Task HelperMethod()
+    {
+        await InvokeAsync(StateHasChanged);
+        CurrentUserId = await GetUserId();
+
+        Playlist = await PlayListRepository.GetPlayList(CurrentUserId, PlaylistId);
+    }
 }
