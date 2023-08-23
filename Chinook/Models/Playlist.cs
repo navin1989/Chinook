@@ -17,12 +17,4 @@ namespace Chinook.Models
         public virtual ICollection<UserPlaylist> UserPlaylists { get; set; }
 
     }
-
-    public partial class PlaylistCustom
-    {
-
-        public long playlistId { get; set; }
-        public string? name { get; set; }
-
-    }
 }

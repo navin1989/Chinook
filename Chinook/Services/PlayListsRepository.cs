@@ -1,7 +1,7 @@
-﻿using Azure;
+﻿using AutoMapper;
+using Azure;
 using Azure.Core;
 using Chinook.ClientModels;
-using Chinook.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
@@ -14,40 +14,39 @@ namespace Chinook.Services
 {
     public class PlayListsRepository : IPlayListsRepository
     {
-        private readonly IDbContextFactory<ChinookContext> _dbContextFactory;
-        private ChinookContext dbContext;
-        public PlayListsRepository(IDbContextFactory<ChinookContext> dbContextFactory)
+        private readonly ChinookContext _dbContext;
+        public PlayListsRepository(ChinookContext dbContext)
         {
-            _dbContextFactory = dbContextFactory;
+            _dbContext = dbContext;
         }
 
+        //Creating playlist per user
         public async Task<List<Models.Playlist>> CreatePlaylists(PlaylistTrack playlistTrack, string playListName, string userId)
         {
-            dbContext = await _dbContextFactory.CreateDbContextAsync();
-            var track = dbContext.Tracks.FirstOrDefault(t => t.TrackId == playlistTrack.TrackId);
+            var track = _dbContext.Tracks.FirstOrDefault(t => t.TrackId == playlistTrack.TrackId);
             Random rnd = new Random();
             int index = rnd.Next();
             try
             {
-                if (CheckForPlaylistExistence(dbContext, userId , playListName))
+                if (CheckForPlaylistExistence(_dbContext, userId , playListName))
                 {
-                    var playlists = dbContext.Playlists.Include(p => p.UserPlaylists).Where(p => p.UserPlaylists.Any(up => up.UserId == userId));
+                    var playlists = _dbContext.Playlists.Include(p => p.UserPlaylists).Where(p => p.UserPlaylists.Any(up => up.UserId == userId));
                     var list = playlists.First(p => p.Name == playListName);
                     list.Tracks.Add(track);
-                    dbContext.Playlists.Update(list);
+                    _dbContext.Playlists.Update(list);
                 }
                 else
                 {
                     var playList = new Chinook.Models.Playlist() { PlaylistId = index, Name = playListName };
                     playList.Tracks.Add(track);
-                    dbContext.Playlists.Add(playList);
+                    _dbContext.Playlists.Add(playList);
 
                     var userPlayList = new Chinook.Models.UserPlaylist() { PlaylistId = index, UserId = userId };
-                    dbContext.UserPlaylists.Add(userPlayList);
+                    _dbContext.UserPlaylists.Add(userPlayList);
                 }
 
-                await dbContext.SaveChangesAsync();
-                return dbContext.Playlists.Where(p=> p.UserPlaylists.Any(up=>up.UserId == userId)).ToList();
+                await _dbContext.SaveChangesAsync();
+                return _dbContext.Playlists.Where(p=> p.UserPlaylists.Any(up=>up.UserId == userId)).ToList();
             }
             catch (Exception ex)
             {
@@ -55,10 +54,11 @@ namespace Chinook.Services
             }
         }
 
+        //Get action
+        //Return a single "PlayList" data 
         public async Task<ClientModels.Playlist> GetPlayList(string userId, long playListId)
         {
-            dbContext = await _dbContextFactory.CreateDbContextAsync();
-            var list = dbContext.Playlists
+            var list = _dbContext.Playlists
                         .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
                         .Where(p => p.PlaylistId == playListId)
                         .Select(p => new ClientModels.Playlist()
@@ -79,26 +79,18 @@ namespace Chinook.Services
         }
 
         //Get action
-        //Returns "PlayList" data 
+        //Returns List of "PlayList" data 
         async Task<List<Models.Playlist>> IPlayListsRepository.GetPlayLists(string userId)
         {
-            dbContext = await _dbContextFactory.CreateDbContextAsync();
             try
             {
-                var up = dbContext.UserPlaylists.Where(up => up.UserId == userId);
-                var filteredList = dbContext.Playlists.Where(p => up.Any(a => a.PlaylistId == p.PlaylistId)); //Filters only the current user's playlists
-                if (filteredList.Any())
-                {
-                    return filteredList.ToList();
-                }
-                else return new List<Models.Playlist>();
-
+                var up = _dbContext.UserPlaylists.Where(up => up.UserId == userId);
+                return await _dbContext.Playlists.Where(p => up.Any(a => a.PlaylistId == p.PlaylistId)).ToListAsync(); //Filters only the current user's playlists
             }
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
-
         }
 
         private bool CheckForPlaylistExistence(ChinookContext dbContext, string userId, string playListName)

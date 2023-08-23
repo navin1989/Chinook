@@ -1,4 +1,4 @@
-﻿using Chinook.Models;
+﻿using Chinook.ClientModels;
 
 namespace Chinook.Services
 {
