@@ -1,3 +1,5 @@
+using Chinook.Models;
+
 namespace Chinook.ClientModels;
 
 public class PlaylistTrack
