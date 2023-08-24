@@ -30,37 +30,11 @@ else
             {
                 <tr>
                     <td><a href="Artist/@artist.ArtistId">@artist.Name</a></td>
-                    <td>@artist.Albums.Count()</td>
+                    <td>@artist.AlbumsCount</td>
                 </tr>
             }
         </tbody>
     </table>
 }
 
-@code {
-    private List<Artist> Artists;
-    private List<Artist> TempArtists;
-    private string SearchKeyWord;
 
-    [Inject] IAlbumRepository AlbumRepository { get; set; }
-
-    protected override async Task OnInitializedAsync() {
-        await InvokeAsync(StateHasChanged);
-        Artists = await AlbumRepository.GetAlbums(); //Gets the albums using an API service.
-        TempArtists = Artists; //Search purpose
-    }
-
-    private void FilterByArtist(ChangeEventArgs e)
-    {
-        Artists = TempArtists;
-        if (e.Value is not null)
-        {
-            Artists = Artists.Where(a => a.Name.Contains(e.Value.ToString())).ToList();
-        }
-        else
-        {
-            Artists = TempArtists;
-        }
-
-    }
-}

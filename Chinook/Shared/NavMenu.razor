@@ -1,5 +1,4 @@
 ﻿@using System.Security.Claims;
-@using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -41,7 +40,7 @@
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
     private bool collapseNavMenu = true;
     private string CurrentUserId = "";
-    private List<Models.Playlist> Playlists;
+    private List<PlaylistsViewModel> Playlists;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     protected override async Task OnInitializedAsync()
@@ -58,7 +57,7 @@
     private async Task LoadData()
     {
         CurrentUserId = await GetUserId();
-        Playlists = await PlayListsRepo.GetPlayLists(CurrentUserId);
+        Playlists = await PlayListsRepo.GetPlayLists();
     }
 
     private void ToggleNavMenu()

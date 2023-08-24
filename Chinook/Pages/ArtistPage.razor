@@ -1,6 +1,6 @@
 ﻿@page "/artist/{ArtistId:long}"
 @attribute [Authorize]
-@using Microsoft.AspNetCore.SignalR.Client
+
 @inject NavigationManager NavigationManager
 @using Chinook.ClientModels
 @using Microsoft.EntityFrameworkCore
@@ -56,88 +56,7 @@ else
 
 }
 
-@code {
-    [Parameter] public long ArtistId { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; }
-    private Modal PlaylistDialog { get; set; }
-    [Inject] IArtistsRepository ArtistsRepository { get; set; }
-    [Inject] IPlayListsRepository PlayListsRepo { get; set; }
 
-    private Artist Artist;
-    private List<PlaylistTrack> Tracks;
-    private List<Models.Playlist> PlayLists;
-    private DbContext DbContext;
-    private PlaylistTrack SelectedTrack;
-    private string InfoMessage;
-    private string CurrentUserId;
-    private string PlayListName { get; set; }
-    private string PlayListId { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await InvokeAsync(StateHasChanged);
-        CurrentUserId = await GetUserId();
-        var artistModel = await ArtistsRepository.GetArtists(ArtistId, CurrentUserId);
-        Artist = artistModel.Artist;
-        Tracks = artistModel.Tracks;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await OnInitializedAsync();
-    }
-
-    private async Task<string> GetUserId()
-    {
-        var user = (await AuthenticationState).User;
-        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-        return userId;
-    }
-
-    private void FavoriteTrack(long trackId, string userId)
-    {
-        var track = Tracks.First(t => t.TrackId == trackId);
-        ArtistsRepository.AddFavorite(track, CurrentUserId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
-    }
-
-    private void UnfavoriteTrack(long trackId)
-    {
-        var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        ArtistsRepository.RemoveFavoriteTrack(track);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
-    }
-
-    private async Task OpenPlaylistDialog(long trackId)
-    {
-        PlayLists = await PlayListsRepo.GetPlayLists(CurrentUserId);
-        CloseInfoMessage();
-        SelectedTrack = Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        PlaylistDialog.Open();
-    }
-
-    private void AddTrackToPlaylist()
-    {
-        CloseInfoMessage();
-        InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {{playlist name}}.";
-        var payLists = PlayListsRepo.CreatePlaylists(SelectedTrack, @PlayListName, CurrentUserId);
-        PlaylistDialog.Close();
-    }
-
-    private void CloseInfoMessage()
-    {
-        InfoMessage = "";
-    }
-
-    private void SelectedPlayListChanged(ChangeEventArgs e)
-    {
-        if (e.Value is not null)
-        {
-            PlayListName = (string)e.Value;
-        }
-    }
-
-}
 
 <Modal @ref="PlaylistDialog">
     <Title>
@@ -152,7 +71,7 @@ else
         }
 
         <div class="form-group mb-2">
-            <label for="ExistingPlaylist">Add to existing playlist</label> 
+            <label for="ExistingPlaylist">Add to existing playlist</label>
 
             <Select class="form-control" id="ExistingPlaylist" @onchange="SelectedPlayListChanged">
                 @if (PlayLists != null)
@@ -164,7 +83,7 @@ else
                         {
                             <option id="@list.PlaylistId">@list.Name</option>
                         }
-                        
+
                     }
                 }
             </Select>
