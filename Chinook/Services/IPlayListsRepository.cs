@@ -1,12 +1,13 @@
 ﻿using Chinook.ClientModels;
 using Chinook.Models;
+using Chinook.Provider;
 
 namespace Chinook.Services
 {
     public interface IPlayListsRepository
     {
-        Task<List<Models.Playlist>> GetPlayLists(string userId);
-        Task<ClientModels.Playlist> GetPlayList(string userId , long playListId);
-        Task<List<Models.Playlist>> CreatePlaylists(PlaylistTrack playlistTrack, string playListName, string userId);
+        Task<List<PlaylistsViewModel>> GetPlayLists();
+        Task<PlaylistViewModel> GetPlayList(long playListId);
+        bool CreatePlaylists(PlaylistTrackViewModel playlistTrack, string playListName);
     }
 }

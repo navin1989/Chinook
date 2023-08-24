@@ -1,4 +1,7 @@
 ﻿using AutoMapper;
+using Chinook.ClientModels;
+using Chinook.Models;
+using Chinook.Provider;
 
 namespace Chinook.Mapper
 {
@@ -6,9 +9,11 @@ namespace Chinook.Mapper
     {
         public AutoMapper()
         {
-            CreateMap<Chinook.Models.Album, Chinook.ClientModels.Album>();
-            CreateMap<Chinook.Models.Artist, Chinook.ClientModels.Artist>();
-            CreateMap<Chinook.Models.Playlist, Chinook.ClientModels.Playlist>();
+            CreateMap<Album, AlbumViewModel>();
+            CreateMap<Artist, ArtistsViewModel>()
+                .ForMember(c => c.AlbumsCount, x => x.MapFrom(v => v.Albums.Count()));
+            CreateMap<Playlist, PlaylistsViewModel>();
+            CreateMap<ArtistData, ArtistDataViewModel>();
         }
     }
 }

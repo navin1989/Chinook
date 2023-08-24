@@ -4,6 +4,6 @@ namespace Chinook.Services
 {
     public interface IAlbumRepository
     {
-        Task<List<Artist>> GetAlbums();
+        Task<List<ArtistsViewModel>> GetAlbums();
     }
 }

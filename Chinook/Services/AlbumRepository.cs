@@ -1,26 +1,25 @@
 ﻿using AutoMapper;
 using Chinook.ClientModels;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http;
-using static System.Net.WebRequestMethods;
+using Chinook.Provider;
 
 namespace Chinook.Services
 {
     public class AlbumRepository : IAlbumRepository
     {
-        private readonly ChinookContext _dbContext;
         private readonly IMapper _mapper;
-        public AlbumRepository(ChinookContext dbContext, IMapper mapper)
+        private readonly IAlbumProvider _albumProvider;
+        public AlbumRepository(IMapper mapper, IAlbumProvider albumProvider)
         {
-            _dbContext = dbContext;
             _mapper = mapper;
+            _albumProvider = albumProvider;
         }
-        public async Task<List<Artist>> GetAlbums()
+        public async Task<List<ArtistsViewModel>> GetAlbums()
         {
             try
             {
-                return _dbContext.Artists.Include(a=>a.Albums)
-                    .Select(a=>_mapper.Map<Artist>(a)).ToList();
+                var albums = await _albumProvider.GetAlbums();
+                return _mapper.Map<List<ArtistsViewModel>>(albums);
             }
             catch (Exception ex)
             {

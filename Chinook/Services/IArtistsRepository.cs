@@ -1,12 +1,13 @@
 ﻿using Chinook.ClientModels;
+using Chinook.Provider;
 
 namespace Chinook.Services
 {
     public interface IArtistsRepository
     {
-        Task<ArtistData> GetArtists(long artistId, string currentUserId);
-        Task AddFavorite(PlaylistTrack playlistTrack, string currentUserId);
-        Task RemoveFavoriteTrack(PlaylistTrack playlistTrack);
-        Task RemoveTrack(PlaylistTrack playlistTrack, long playListId);
+        Task<ArtistDataViewModel> GetArtists(long artistId);
+        Task AddFavorite(long trackId);
+        Task RemoveFavoriteTrack(long trackId);
+        Task RemoveTrack(long trackId, long playListId);
     }
 }
