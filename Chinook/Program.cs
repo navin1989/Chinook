@@ -1,7 +1,9 @@
 using Chinook;
 using Chinook.Areas.Identity;
 using Chinook.ClientModels;
+using Chinook.Helper;
 using Chinook.Models;
+using Chinook.Provider;
 using Chinook.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -20,12 +22,19 @@ builder.Services.AddDefaultIdentity<ChinookUser>(options => options.SignIn.Requi
 
 builder.Services.AddHttpClient();
 
+//Registering service layer 
 builder.Services.AddScoped<IArtistsRepository , ArtistsRepository>();
-builder.Services.AddScoped<IAlbumRepository , AlbumRepository>();
+builder.Services.AddScoped<IAlbumRepository, AlbumRepository>();
 builder.Services.AddScoped<IPlayListsRepository, PlayListsRepository>();
-builder.Services.AddScoped<ArtistData>();
+
+//Registering data layer
+builder.Services.AddScoped<IArtistsProvider, ArtistsProvider>();
+builder.Services.AddScoped<IAlbumProvider, AlbumProvider>();
+builder.Services.AddScoped<IPlayListsProvider, PlayListsProvider>();
+
+builder.Services.AddScoped<IAuthentication, Authentication>();
+
 builder.Services.AddRazorPages();
-builder.Services.AddSignalR();
 builder.Services.AddServerSideBlazor();
 
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ChinookUser>>();
@@ -45,14 +54,10 @@ else
     app.UseHsts();
 }
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
