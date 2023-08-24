@@ -2,7 +2,7 @@ using Chinook.Models;
 
 namespace Chinook.ClientModels;
 
-public class PlaylistTrack
+public class PlaylistTrackViewModel
 {
     public long TrackId { get; set; }
     public string TrackName { get; set; }
