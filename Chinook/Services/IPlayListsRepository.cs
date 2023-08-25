@@ -8,6 +8,6 @@ namespace Chinook.Services
     {
         Task<List<PlaylistsViewModel>> GetPlayLists();
         Task<PlaylistViewModel> GetPlayList(long playListId);
-        bool CreatePlaylists(PlaylistTrackViewModel playlistTrack, string playListName);
+        bool CreatePlaylists(long trackId, string playListName);
     }
 }

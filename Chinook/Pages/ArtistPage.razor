@@ -1,9 +1,9 @@
 ﻿@page "/artist/{ArtistId:long}"
 @attribute [Authorize]
 
-@inject NavigationManager NavigationManager
 @using Chinook.ClientModels
 @using Microsoft.EntityFrameworkCore
+
 
 @if (!string.IsNullOrWhiteSpace(InfoMessage))
 {
@@ -56,8 +56,6 @@ else
 
 }
 
-
-
 <Modal @ref="PlaylistDialog">
     <Title>
         Add to playlist
@@ -73,24 +71,20 @@ else
         <div class="form-group mb-2">
             <label for="ExistingPlaylist">Add to existing playlist</label>
 
-            <Select class="form-control" id="ExistingPlaylist" @onchange="SelectedPlayListChanged">
-                @if (PlayLists != null)
-                {
-                    <option id="Default">Select from existing list</option>
+            <select class="form-control" id="ExistingPlaylist" @onchange="SelectedPlayListChanged">
+                    <option id="Default"></option>
                     @foreach (var list in PlayLists)
                     {
                         if (list.Name != Constants.FavoriteList.Name)
                         {
                             <option id="@list.PlaylistId">@list.Name</option>
                         }
-
                     }
-                }
-            </Select>
+            </select>
         </div>
         <div class="form-group mb-2">
             <label for="NewPlaylist">Create new playlist</label>
-            <input type="text" @bind="@PlayListName" @oninput="@((e) => { PlayListName=(string)e.Value;})" id="NewPlaylist" class="form-control" placeholder="Name for the new playlist" />
+            <input type="text" @bind="PlayListName" id="NewPlaylist" class="form-control" placeholder="Name for the new playlist" />
         </div>
     </Body>
     <Footer>

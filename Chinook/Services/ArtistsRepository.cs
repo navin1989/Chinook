@@ -7,12 +7,10 @@ namespace Chinook.Services
 {
     public class ArtistsRepository : IArtistsRepository
     {
-        private IMapper _mapper;
         private IArtistsProvider _artistsProvider;
         private string userId;
-        public ArtistsRepository(IMapper mapper , IArtistsProvider artistsProvider, IAuthentication authentication)
+        public ArtistsRepository(IArtistsProvider artistsProvider, IAuthentication authentication)
         {
-            _mapper = mapper;
             _artistsProvider = artistsProvider;
             userId = authentication.CurrentUserId;
         }
@@ -21,9 +19,7 @@ namespace Chinook.Services
         //Returns "ArtistData" 
         public async Task<ArtistDataViewModel> GetArtists(long artistId)
         {
-            try
-            {
-                 var data = await _artistsProvider.GetArtists(artistId, userId);
+                var data = await _artistsProvider.GetArtists(artistId, userId);
 
                 return new ArtistDataViewModel
                 {
@@ -36,52 +32,24 @@ namespace Chinook.Services
                     }).ToList(),
                     Artist = new ArtistViewModel { Name = data.Artist.Name }
                 };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
         }
 
         //Add the track to the favorite list
         public async Task AddFavorite(long trackId)
         {
-            try
-            {
-               await _artistsProvider.AddFavorite(trackId, userId);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            
-            
+            await _artistsProvider.AddFavorite(trackId, userId);          
         }
 
         //Delete from a play list
         public async Task RemoveTrack(long trackId, long PlaylistId)
         {
-            try
-            {
-                await _artistsProvider.RemoveTrack(trackId, PlaylistId);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            await _artistsProvider.RemoveTrack(trackId, PlaylistId);
         }
 
        // Remove from favorite list
         public async Task RemoveFavoriteTrack(long trackId)
         {
-            try
-            {
-                await _artistsProvider.RemoveFavoriteTrack(trackId, userId);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            await _artistsProvider.RemoveFavoriteTrack(trackId, userId);
         }
     }
 }

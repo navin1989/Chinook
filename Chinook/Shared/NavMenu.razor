@@ -16,6 +16,14 @@
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
+        @if(FavPlaylist != null)
+        {
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="@($"playlist/{FavPlaylist.PlaylistId}")">
+                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@FavPlaylist.Name
+            </NavLink>
+            </div>
+        }
         <div class="nav-item px-3">
             @if (Playlists != null)
             {
@@ -23,9 +31,13 @@
                 href binds with playlist Id *@
                 @foreach (var nav in Playlists)
                 {
-                    <NavLink class="nav-link" href="@($"playlist/{nav.PlaylistId}")">
-                        <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@nav.Name
-                    </NavLink>
+                    if(nav.Name != Constants.FavoriteList.Name)
+                    {
+                        <NavLink class="nav-link" href="@($"playlist/{nav.PlaylistId}")">
+                            <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@nav.Name
+                        </NavLink>
+                    }
+
                 }
             }
 
@@ -33,41 +45,4 @@
     </nav>
 </div>
 
-@code {
-    //Injecting "IPlayLists"
-    [Inject] IPlayListsRepository PlayListsRepo { get; set; }
 
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
-    private bool collapseNavMenu = true;
-    private string CurrentUserId = "";
-    private List<PlaylistsViewModel> Playlists;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await InvokeAsync(StateHasChanged);
-        await LoadData();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await OnInitializedAsync();
-    }
-
-    private async Task LoadData()
-    {
-        CurrentUserId = await GetUserId();
-        Playlists = await PlayListsRepo.GetPlayLists();
-    }
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-    private async Task<string> GetUserId()
-    {
-        var user = (await authenticationState).User;
-        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-        return userId;
-    }
-}

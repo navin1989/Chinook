@@ -16,15 +16,8 @@ namespace Chinook.Services
         }
         public async Task<List<ArtistsViewModel>> GetAlbums()
         {
-            try
-            {
                 var albums = await _albumProvider.GetAlbums();
                 return _mapper.Map<List<ArtistsViewModel>>(albums);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
         }
     }
 }

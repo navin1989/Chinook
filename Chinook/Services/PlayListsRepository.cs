@@ -28,24 +28,15 @@ namespace Chinook.Services
         }
 
         //Creating playlist per user
-        public bool CreatePlaylists(PlaylistTrackViewModel playlistTrack, string playListName)
+        public bool CreatePlaylists(long trackId, string playListName)
         {
-            try
-            {
-                return _playListsProvider.CreatePlaylists(playlistTrack.TrackId, playListName, userId);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+             return _playListsProvider.CreatePlaylists(trackId, playListName, userId);
         }
 
         //Get action
         //Return a single "PlayList" data 
         public async Task<PlaylistViewModel> GetPlayList(long playListId)
         {
-            try
-            {
                 var playlist = await _playListsProvider.GetPlayList(playListId);
 
                 return new PlaylistViewModel
@@ -60,27 +51,14 @@ namespace Chinook.Services
                         IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == userId && up.Playlist.Name == Constants.FavoriteList.Name)).Any()
                     }).ToList()
                 };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
         }
 
         //Get action
         //Returns List of "PlayList" data 
         public async Task<List<PlaylistsViewModel>> GetPlayLists()
         {
-            try
-            {
-                var playlists = await _playListsProvider.GetPlayLists(userId);
-                return _mapper.Map<List<PlaylistsViewModel>>(playlists);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            var playlists = await _playListsProvider.GetPlayLists(userId);
+            return _mapper.Map<List<PlaylistsViewModel>>(playlists);
         }
     }
 }

@@ -25,13 +25,12 @@ namespace Chinook.Pages
 
         private ArtistViewModel Artist;
         private List<PlaylistTrackViewModel> Tracks;
-        private List<PlaylistsViewModel> PlayLists;
-        private DbContext DbContext;
+        private List<PlaylistsViewModel> PlayLists = new();
         private PlaylistTrackViewModel SelectedTrack;
         private string InfoMessage;
         private string CurrentUserId;
         private string PlayListName { get; set; }
-        private string PlayListId { get; set; }
+        private string ExistingPlayListName { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
@@ -84,6 +83,7 @@ namespace Chinook.Pages
 
         private async Task OpenPlaylistDialog(long trackId)
         {
+            PlayListName = "";
             PlayLists = await PlayListsRepo.GetPlayLists();
             CloseInfoMessage();
             SelectedTrack = Tracks.FirstOrDefault(t => t.TrackId == trackId);
@@ -92,9 +92,15 @@ namespace Chinook.Pages
 
         private void AddTrackToPlaylist()
         {
+
+            if(string.IsNullOrEmpty(PlayListName))
+            {
+                PlayListName = ExistingPlayListName;
+            }
+            PlayListsRepo.CreatePlaylists(SelectedTrack.TrackId, PlayListName);
             CloseInfoMessage();
-            InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {{playlist name}}.";
-            var payLists = PlayListsRepo.CreatePlaylists(SelectedTrack, @PlayListName);
+            InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist - {@PlayListName}.";
+           
             PlaylistDialog.Close();
         }
 
@@ -107,7 +113,7 @@ namespace Chinook.Pages
         {
             if (e.Value is not null)
             {
-                PlayListName = (string)e.Value;
+                ExistingPlayListName = (string)e.Value;
             }
         }
     }
