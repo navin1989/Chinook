@@ -22,29 +22,28 @@ namespace Chinook.Provider
         public bool CreatePlaylists(long trackId, string playListName, string userId)
         {
             var track = _dbContext.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-            Random rnd = new Random();
-            int index = rnd.Next();
+            int index = _dbContext.Playlists.Count() + 1;
             try
             {
-                if (CheckForPlaylistExistence(_dbContext, userId , playListName))
+                if (CheckForPlaylistExistence(_dbContext, userId, playListName))
                 {
-                    var playlists = _dbContext.Playlists.Include(p => p.UserPlaylists).Where(p => p.UserPlaylists.Any(up => up.UserId == userId));
-                    var list = playlists.First(p => p.Name == playListName);
-                    list.Tracks.Add(track);
-                    _dbContext.Playlists.Update(list);
+                    var playlists = _dbContext.Playlists.Include(p => p.Tracks).FirstOrDefault(p => p.Name == playListName && p.UserPlaylists.Any(up => up.UserId == userId));
+
+                    playlists.Tracks.Add(track);
+                    track.Playlists.Add(playlists);
                 }
                 else
                 {
-                    var playList = new Chinook.Models.Playlist() { PlaylistId = index, Name = playListName };
-                    playList.Tracks.Add(track);
-                    _dbContext.Playlists.Add(playList);
+                    var playList = new Playlist() { PlaylistId = index , Name = playListName };
+                    var userPlayList = new  UserPlaylist() { Playlist = playList, UserId = userId };
 
-                    var userPlayList = new Chinook.Models.UserPlaylist() { PlaylistId = index, UserId = userId };
+                    playList.Tracks.Add(track);
                     _dbContext.UserPlaylists.Add(userPlayList);
+                    _dbContext.Playlists.Add(playList);
                 }
 
-                _dbContext.SaveChanges();
-                return true;
+                if (_dbContext.SaveChanges() > 0) return true;
+                return false;
             }
             catch (Exception ex)
             {
@@ -56,11 +55,17 @@ namespace Chinook.Provider
         //Return a single "ClientPlayList" data 
         public async Task<Playlist?> GetPlayList(long playListId)
         {
-            return _dbContext.Playlists
-                        .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-                        .Include(p=>p.Tracks).ThenInclude(c => c.Playlists).ThenInclude(c => c.UserPlaylists)
-                        .Where(p => p.PlaylistId == playListId).FirstOrDefault();
-                     
+            try
+            {
+                return _dbContext.Playlists
+               .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
+               .Include(p => p.Tracks).ThenInclude(c => c.Playlists).ThenInclude(c => c.UserPlaylists)
+               .Where(p => p.PlaylistId == playListId).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         //Get action

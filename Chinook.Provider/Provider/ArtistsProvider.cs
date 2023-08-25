@@ -17,7 +17,7 @@ namespace Chinook.Provider
         //Returns "ArtistData" 
         public async Task<ArtistData> GetArtists(long artistId, string userId)
         {
-            _artistData.Artist = _dbContext.Artists.Include(c=>c.Albums).SingleOrDefault(a => a.ArtistId == artistId);
+            _artistData.Artist = _dbContext.Artists.Include(c => c.Albums).SingleOrDefault(a => a.ArtistId == artistId);
 
             _artistData.Tracks = await _dbContext.Tracks.Include(c => c.Album).ThenInclude(c => c.Artist)
                 .Include(c => c.Playlists).ThenInclude(c => c.UserPlaylists).Where(a => a.Album.ArtistId == artistId)
@@ -36,7 +36,7 @@ namespace Chinook.Provider
 
             if (track != null)
             {
-                
+
                 //Create a playlist for favorite if it is not exist
                 if (!CheckUserPlayListExistence(_dbContext, userId))
                 {
@@ -44,7 +44,7 @@ namespace Chinook.Provider
                     playList.Tracks.Add(track);
                     _dbContext.Playlists.Add(playList);
 
-                    var userPlayList = new UserPlaylist() { PlaylistId = index, UserId = userId };
+                    var userPlayList = new UserPlaylist() { Playlist = playList, UserId = userId };
                     _dbContext.UserPlaylists.Add(userPlayList);
                 }
                 else
@@ -87,24 +87,24 @@ namespace Chinook.Provider
             }
         }
 
-       // Remove from favorite list
+        // Remove from favorite list
         public async Task RemoveFavoriteTrack(long TrackId, string userId)
         {
-            var track = _dbContext.Tracks.Include(t=>t.Playlists).FirstOrDefault(t => t.TrackId == TrackId);
-
-            if (track != null)
+            try
             {
-                try
+                var track = _dbContext.Tracks.Include(t => t.Playlists).FirstOrDefault(t => t.TrackId == TrackId);
+                if (track != null)
                 {
-                    var favPlayList = _dbContext.Playlists.Include(p => p.Tracks).First(p => p.Name == Constants.FavoriteList.Name && p.UserPlaylists.Any(up=>up.UserId == userId));
+                    var favPlayList = _dbContext.Playlists.Include(p => p.Tracks)
+                                      .FirstOrDefault(p => p.Name == Constants.FavoriteList.Name && p.UserPlaylists.Any(up => up.UserId == userId));
                     track.Playlists.Remove(favPlayList);
                     favPlayList.Tracks.Remove(track);
                     await _dbContext.SaveChangesAsync();
                 }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
         }
         private bool CheckUserPlayListExistence(ChinookContext dbContext, string userId)

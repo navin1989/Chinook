@@ -16,7 +16,7 @@ namespace Chinook.Provider
         {
             try
             {
-                return _dbContext.Artists.Include(a=>a.Albums).ToList();
+                return _dbContext.Artists.Include(a => a.Albums).ToList();
             }
             catch (Exception ex)
             {
