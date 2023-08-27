@@ -58,6 +58,7 @@ namespace Chinook.Pages
             var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
             ArtistsRepository.RemoveTrack(trackId, PlaylistId);
             CloseInfoMessage();
+            _ = OnInitializedAsync();
         }
 
         private void CloseInfoMessage()
