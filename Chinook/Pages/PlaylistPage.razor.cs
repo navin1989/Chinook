@@ -15,35 +15,24 @@ namespace Chinook.Pages
         private Task<AuthenticationState> AuthenticationState { get; set; }
 
         [Inject]
-        IPlayListsRepository PlayListRepository { get; set; }
+        IPlayListsService PlayListRepository { get; set; }
 
         [Inject]
-        IArtistsRepository ArtistsRepository { get; set; }
+        IArtistsService ArtistsRepository { get; set; }
+
+        [Inject]
+        InvokeSideBarService InvokeNavBar { get; set; }
 
         private PlaylistViewModel Playlist;
-        private string CurrentUserId;
         private string InfoMessage;
-        //Used this overridden method, to make sure the aside NavLinks are rereshing the page.
-        protected override async Task OnParametersSetAsync()
-        {
-            await HelperMethod();
-        }
 
         protected override async Task OnInitializedAsync()
         {
             await HelperMethod();
         }
-
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+        protected override async Task OnParametersSetAsync()
         {
-            await OnInitializedAsync();
-        }
-
-        private async Task<string> GetUserId()
-        {
-            var user = (await AuthenticationState).User;
-            var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-            return userId;
+            await HelperMethod();
         }
 
         private void FavoriteTrack(long trackId)
@@ -51,13 +40,15 @@ namespace Chinook.Pages
             var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
             InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
             ArtistsRepository.AddFavorite(trackId);
+            InvokeNavBar.Invoke();
         }
 
-        private async Task UnfavoriteTrack(long trackId)
+        private void UnfavoriteTrack(long trackId)
         {
             var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-            await ArtistsRepository.RemoveFavoriteTrack(trackId);
+            ArtistsRepository.RemoveFavoriteTrack(trackId);
             InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+            InvokeNavBar.Invoke();
         }
 
         private void RemoveTrack(long trackId)

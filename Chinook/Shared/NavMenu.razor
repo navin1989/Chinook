@@ -16,14 +16,6 @@
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
-        @if(FavPlaylist != null)
-        {
-            <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@($"playlist/{FavPlaylist.PlaylistId}")">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@FavPlaylist.Name
-            </NavLink>
-            </div>
-        }
         <div class="nav-item px-3">
             @if (Playlists != null)
             {
@@ -31,12 +23,9 @@
                 href binds with playlist Id *@
                 @foreach (var nav in Playlists)
                 {
-                    if(nav.Name != Constants.FavoriteList.Name)
-                    {
                         <NavLink class="nav-link" href="@($"playlist/{nav.PlaylistId}")">
                             <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@nav.Name
-                        </NavLink>
-                    }
+                        </NavLink>                   
 
                 }
             }

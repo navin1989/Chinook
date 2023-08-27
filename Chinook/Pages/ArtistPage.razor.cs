@@ -18,17 +18,20 @@ namespace Chinook.Pages
         private Modal PlaylistDialog { get; set; }
 
         [Inject]
-        IArtistsRepository ArtistsRepository { get; set; }
+        IArtistsService ArtistsRepository { get; set; }
 
         [Inject]
-        IPlayListsRepository PlayListsRepo { get; set; }
+        IPlayListsService PlayListsRepo { get; set; }
+
+        [Inject]
+        InvokeSideBarService InvokeNavBar { get; set; }
+
 
         private ArtistViewModel Artist;
         private List<PlaylistTrackViewModel> Tracks;
         private List<PlaylistsViewModel> PlayLists = new();
         private PlaylistTrackViewModel SelectedTrack;
         private string InfoMessage;
-        private string CurrentUserId;
         private string PlayListName { get; set; }
         private string ExistingPlayListName { get; set; }
 
@@ -37,7 +40,6 @@ namespace Chinook.Pages
             try
             {
                 await InvokeAsync(StateHasChanged);
-                CurrentUserId = await GetUserId();
                 var artistModel = await ArtistsRepository.GetArtists(ArtistId);
                 Artist = artistModel.Artist;
                 Tracks = artistModel.Tracks;
@@ -47,26 +49,14 @@ namespace Chinook.Pages
                 throw;
             }
         }
-
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            await OnInitializedAsync();
-        }
-
-        private async Task<string> GetUserId()
-        {
-            var user = (await AuthenticationState).User;
-            var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-            return userId;
-        }
-
-        private void FavoriteTrack(long trackId, string userId)
+        private void FavoriteTrack(long trackId)
         {
             try
             {
                 var track = Tracks.First(t => t.TrackId == trackId);
                 ArtistsRepository.AddFavorite(trackId);
                 InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+                InvokeNavBar.Invoke();
             }
             catch (Exception ex)
             {
@@ -79,6 +69,7 @@ namespace Chinook.Pages
             var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
             await ArtistsRepository.RemoveFavoriteTrack(trackId);
             InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+            InvokeNavBar.Invoke();
         }
 
         private async Task OpenPlaylistDialog(long trackId)
@@ -92,16 +83,22 @@ namespace Chinook.Pages
 
         private void AddTrackToPlaylist()
         {
-
-            if(string.IsNullOrEmpty(PlayListName))
+            if (string.IsNullOrEmpty(PlayListName) && !string.IsNullOrEmpty(ExistingPlayListName))
             {
                 PlayListName = ExistingPlayListName;
             }
-            PlayListsRepo.CreatePlaylists(SelectedTrack.TrackId, PlayListName);
-            CloseInfoMessage();
-            InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist - {@PlayListName}.";
-           
-            PlaylistDialog.Close();
+            if(!string.IsNullOrEmpty(PlayListName))
+            {
+                bool newListCreated = PlayListsRepo.CreatePlaylists(SelectedTrack.TrackId, PlayListName);
+                CloseInfoMessage();
+                InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist - {@PlayListName}.";
+                PlaylistDialog.Close();
+                if(newListCreated)
+                {
+                    InvokeNavBar.Invoke();
+                }
+            }          
+
         }
 
         private void CloseInfoMessage()

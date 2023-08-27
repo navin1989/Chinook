@@ -10,7 +10,7 @@ namespace Chinook.Pages
         private List<ArtistsViewModel> TempArtists;
         private string SearchKeyWord;
         [Inject]
-        IAlbumRepository AlbumRepository { get; set; }
+        IAlbumService AlbumRepository { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
