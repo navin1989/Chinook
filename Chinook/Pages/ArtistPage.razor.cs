@@ -40,7 +40,7 @@ namespace Chinook.Pages
             try
             {
                 await InvokeAsync(StateHasChanged);
-                var artistModel = await ArtistsRepository.GetArtists(ArtistId);
+                var artistModel = await ArtistsRepository.GetArtistAndTracks(ArtistId);
                 Artist = artistModel.Artist;
                 Tracks = artistModel.Tracks;
             }

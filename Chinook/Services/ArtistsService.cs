@@ -16,10 +16,11 @@ namespace Chinook.Services
         }
 
         //Get action
-        //Returns "ArtistData" 
-        public async Task<ArtistDataViewModel> GetArtists(long artistId)
+        //Returns "ArtistDataViewModel" 
+        //ArtistDataViewModel contains Tracks & Artist
+        public async Task<ArtistDataViewModel> GetArtistAndTracks(long artistId)
         {
-                var data = await _artistsRepository.GetArtists(artistId, userId);
+                var data = await _artistsRepository.GetArtistAndTracks(artistId, userId);
 
                 return new ArtistDataViewModel
                 {

@@ -5,7 +5,7 @@ namespace Chinook.Services
 {
     public interface IArtistsService
     {
-        Task<ArtistDataViewModel> GetArtists(long artistId);
+        Task<ArtistDataViewModel> GetArtistAndTracks(long artistId);
         Task AddFavorite(long trackId);
         Task RemoveFavoriteTrack(long trackId);
         Task RemoveTrack(long trackId, long playListId);
