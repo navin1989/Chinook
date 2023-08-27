@@ -23,14 +23,16 @@ builder.Services.AddDefaultIdentity<ChinookUser>(options => options.SignIn.Requi
 builder.Services.AddHttpClient();
 
 //Registering service layer 
-builder.Services.AddScoped<IArtistsRepository , ArtistsRepository>();
+builder.Services.AddScoped<IArtistsService , ArtistsService>();
+builder.Services.AddScoped<IAlbumService, AlbumService>();
+builder.Services.AddScoped<IPlayListsService, PlayListsService>();
+
+//Registering data layer
+builder.Services.AddScoped<IArtistsRepository, ArtistsRepository>();
 builder.Services.AddScoped<IAlbumRepository, AlbumRepository>();
 builder.Services.AddScoped<IPlayListsRepository, PlayListsRepository>();
 
-//Registering data layer
-builder.Services.AddScoped<IArtistsProvider, ArtistsProvider>();
-builder.Services.AddScoped<IAlbumProvider, AlbumProvider>();
-builder.Services.AddScoped<IPlayListsProvider, PlayListsProvider>();
+builder.Services.AddScoped<InvokeSideBarService>();
 
 builder.Services.AddScoped<IAuthentication, Authentication>();
 
