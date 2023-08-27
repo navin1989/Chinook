@@ -15,7 +15,7 @@ namespace Chinook.Provider
 
         //Get action
         //Returns "ArtistData" 
-        public async Task<ArtistData> GetArtists(long artistId, string userId)
+        public async Task<ArtistData> GetArtistAndTracks(long artistId, string userId)
         {
             _artistData.Artist = _dbContext.Artists.Include(c => c.Albums).SingleOrDefault(a => a.ArtistId == artistId);
 
