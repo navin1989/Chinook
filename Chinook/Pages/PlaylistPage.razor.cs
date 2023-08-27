@@ -41,6 +41,7 @@ namespace Chinook.Pages
             InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
             ArtistsRepository.AddFavorite(trackId);
             InvokeNavBar.Invoke();
+            _ = OnInitializedAsync();
         }
 
         private void UnfavoriteTrack(long trackId)
@@ -49,6 +50,7 @@ namespace Chinook.Pages
             ArtistsRepository.RemoveFavoriteTrack(trackId);
             InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
             InvokeNavBar.Invoke();
+            _ = OnInitializedAsync();
         }
 
         private void RemoveTrack(long trackId)

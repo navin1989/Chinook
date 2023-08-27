@@ -57,6 +57,7 @@ namespace Chinook.Pages
                 ArtistsRepository.AddFavorite(trackId);
                 InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
                 InvokeNavBar.Invoke();
+                _ = OnInitializedAsync();
             }
             catch (Exception ex)
             {
@@ -70,6 +71,7 @@ namespace Chinook.Pages
             await ArtistsRepository.RemoveFavoriteTrack(trackId);
             InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
             InvokeNavBar.Invoke();
+            _ = OnInitializedAsync();
         }
 
         private async Task OpenPlaylistDialog(long trackId)
